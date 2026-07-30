@@ -225,7 +225,7 @@ var cfg={
   spot:{key:"fd_s",collKey:"fd_sc",lbl:"景点",ph:"景点名",btn:"添加到景点单",hi:"城市+景点必填 | 点名称标记已去 | 📋复制地址 | ✏️备注随时补"}
 };
 
-// ===== 数据 =====
+// ===== 数据（已清空，打开后自己记录）=====
 var data=JSON.parse(localStorage.getItem(cfg[mode].key)||"[]");
 var collapsed=JSON.parse(localStorage.getItem(cfg[mode].collKey)||"[]");
 var kw="";
@@ -260,7 +260,7 @@ function switchMode(m){
 $bpl.onclick=function(){$pinput.click()};
 $pinput.onchange=function(){
   var f=this.files[0];if(!f)return;
-  if(f.size>6*1024*1024){toast("照片太大,选5MB以下的");this.value="";return}
+  if(f.size>5*1024*1024){toast("照片太大,选5MB以下的");this.value="";return}
   var r=new FileReader();
   r.onload=function(e){
     var img=new Image();
@@ -337,7 +337,8 @@ function render(){
   var todo=f.filter(function(i){return !i.d});
   var doneItems=f.filter(function(i){return i.d});
 
-  var tot=data.length,dn=data.filter(function(i){return i.d}).length;
+  var tot=data.length;
+  var dn=data.filter(function(i){return i.d}).length;
   var cc=new Set(data.map(function(i){return i.c})).size;
   var pc=new Set(data.map(function(i){return getProv(i.c)})).size;
   var phc=data.filter(function(i){return i.p}).length;
@@ -352,7 +353,7 @@ function render(){
 
   $listTodo.innerHTML="";
   if(todo.length==0){
-    $listTodo.innerHTML='<div class="empty"><div class="ic">📭</div>'+(kw?'无匹配结果':'所有'+lbl+'都已记录!加油去吃/逛吧~')+'</div>';
+    $listTodo.innerHTML='<div class="empty"><div class="ic">📭</div>'+(kw?'无匹配结果':'还没有记录,快去添加吧~')+'</div>';
   }else{
     $listTodo.appendChild(buildList(todo,false));
   }
@@ -476,34 +477,7 @@ if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js').catch(function(){});
 }
 
-// ===== 初始化示例 =====
-var fd=JSON.parse(localStorage.getItem("fd_f")||"[]");
-var sd=JSON.parse(localStorage.getItem("fd_s")||"[]");
-if(fd.length===0&&sd.length===0){
-  fd=[
-    {c:"成都",s:"洞子口张老二凉粉",a:"文殊院大街39号",r:"甜水面必点!微辣",p:"",d:false,t:Date.now()},
-    {c:"成都",s:"严太婆锅魁",a:"奎星楼街",r:"牛肉锅魁排队人超多",p:"",d:false,t:Date.now()},
-    {c:"长沙",s:"公交新村粉店",a:"人民中路",r:"雪里蕻肉丝粉加个蛋",p:"",d:false,t:Date.now()},
-    {c:"长沙",s:"黑色经典臭豆腐",a:"五一广场",r:"外酥里嫩,配萝卜干",p:"",d:true,t:Date.now()},
-    {c:"广州",s:"陶陶居",a:"上下九步行街",r:"早茶!虾饺+红米肠",p:"",d:false,t:Date.now()},
-    {c:"西安",s:"老孙家羊肉泡馍",a:"回民街",r:"自己掰馍越小越入味",p:"",d:false,t:Date.now()},
-    {c:"重庆",s:"珮姐老火锅",a:"洪崖洞",r:"九宫格!微辣起步",p:"",d:false,t:Date.now()},
-    {c:"武汉",s:"蔡林记热干面",a:"户部巷",r:"加酸豆角绝了",p:"",d:true,t:Date.now()}
-  ];
-  sd=[
-    {c:"成都",s:"宽窄巷子",a:"青羊区同仁路",r:"晚上去更有氛围",p:"",d:false,t:Date.now()},
-    {c:"成都",s:"都江堰",a:"都江堰市",r:"建议请导游讲历史",p:"",d:false,t:Date.now()},
-    {c:"长沙",s:"岳麓山",a:"岳麓区",r:"秋天红叶超美",p:"",d:false,t:Date.now()},
-    {c:"西安",s:"兵马俑",a:"临潼区",r:"一定要请讲解员!",p:"",d:true,t:Date.now()},
-    {c:"重庆",s:"洪崖洞",a:"渝中区嘉陵江滨江路",r:"夜景绝美,适合拍照",p:"",d:false,t:Date.now()},
-    {c:"桂林",s:"漓江",a:"漓江风景区",r:"坐竹筏比游船舒服",p:"",d:false,t:Date.now()},
-    {c:"杭州",s:"西湖",a:"西湖区",r:"断桥残雪冬天去!",p:"",d:false,t:Date.now()},
-    {c:"北京",s:"故宫",a:"东城区景山前街4号",r:"提前网上预约!",p:"",d:true,t:Date.now()}
-  ];
-  localStorage.setItem("fd_f",JSON.stringify(fd));
-  localStorage.setItem("fd_s",JSON.stringify(sd));
-}
-
+// ===== 初始化（无示例数据，打开就是空白，等你记录）=====
 render();
 </script>
 </body>
