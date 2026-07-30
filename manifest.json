@@ -1,0 +1,24 @@
+{
+  "name": "旅行心愿单",
+  "short_name": "心愿单",
+  "description": "记录想去的城市美食和景点，按省份自动分组，一目了然",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ff6b35",
+  "theme_color": "#ff6b35",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#ff6b35">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="旅行心愿单">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" type="image/x-icon" href="./favicon.ico">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>旅行心愿单</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f5;padding-bottom:90px;color:#333;-webkit-tap-highlight-color:transparent}
+
+/* 顶部 */
+.topbar{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#ff6b35,#f7931e);padding:10px 10px 8px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.topbar h1{color:#fff;font-size:17px;margin-bottom:6px}
+.tabs{display:flex;gap:0;background:rgba(255,255,255,.2);border-radius:20px;padding:3px;max-width:260px;margin:0 auto 6px}
+.tab{flex:1;padding:5px 12px;font-size:13px;color:rgba(255,255,255,.7);border-radius:16px;text-align:center;cursor:pointer;border:none;background:none;font-weight:600}
+.tab.on{background:#fff;color:#ff6b35}
+.search input{width:100%;padding:7px 14px;font-size:14px;border-radius:16px;border:none;outline:0;background:rgba(255,255,255,.95)}
+
+/* 输入区 */
+.inputbox{background:#fff;padding:10px;position:sticky;top:96px;z-index:99;border-bottom:1px solid #eee}
+.inputbox input,.inputbox textarea{width:100%;padding:8px 12px;font-size:14px;border:1px solid #ddd;border-radius:8px;margin-bottom:6px;outline:0;font-family:inherit;-webkit-appearance:none}
+.inputbox textarea{resize:vertical;min-height:32px}
+.inputrow{display:flex;gap:6px;margin-bottom:6px}
+.inputrow input{flex:1}
+.btnadd{width:100%;padding:9px;background:#ff6b35;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;-webkit-appearance:none}
+.btnphoto{background:#e8f5e9;color:#4caf50;border:1px dashed #4caf50;padding:6px 10px;border-radius:8px;font-size:12px;display:inline-block;margin-bottom:6px;cursor:pointer}
+.btnphoto.has{border-style:solid;background:#c8e6c9}
+#photoinput{display:none}
+
+.hint{font-size:11px;color:#aaa;text-align:center;padding:5px 10px;background:#fafafa;border-bottom:1px solid #f0f0f0}
+
+/* 统计 */
+.stats{display:flex;justify-content:space-around;background:#fff;padding:8px;font-size:11px;color:#666;margin-bottom:8px;border-bottom:1px solid #f0f0f0}
+.stats b{display:block;text-align:center;color:#ff6b35;font-size:14px;margin-bottom:1px}
+.stats .sdone b{color:#4caf50}
+
+/* 城市导航 */
+.navchips{display:flex;gap:5px;padding:5px 10px;overflow-x:auto;background:#fff;margin-bottom:6px;position:sticky;top:196px;z-index:98;border-bottom:1px solid #eee}
+.navchips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:2px 9px;font-size:11px;background:#f0f0f0;border-radius:10px;color:#555}
+.chip.on{background:#ff6b35;color:#fff}
+
+/* 分区标题 */
+.section-title{margin:10px 10px 4px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
+.section-title.todo{color:#ff6b35}
+.section-title.done{color:#4caf50}
+.section-title .badge{background:rgba(0,0,0,.08);padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600}
+
+/* 列表 */
+.prov{margin:6px 10px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.provhead{padding:9px 14px;background:#f8f9ff;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border-bottom:1px solid #f0f0f0}
+.provhead b{font-size:14px}
+.provhead .ct{font-size:11px;color:#999;background:#eee;padding:1px 6px;border-radius:8px;margin-left:6px}
+.cityblk{border-bottom:1px solid #f8f8f8}
+.cityblk:last-child{border-bottom:0}
+.cityname{padding:7px 14px 3px;font-size:13px;font-weight:700;color:#555;display:flex;align-items:center;gap:4px}
+.cityname .d{width:5px;height:5px;border-radius:50%;background:#ff6b35;display:inline-block}
+.cityname .d.done{background:#4caf50}
+
+/* 条目 */
+.item{padding:7px 14px;display:flex;align-items:flex-start;gap:6px;border-bottom:1px solid #fafafa;flex-wrap:wrap}
+.item:last-child{border-bottom:0}
+.item.done .nm{text-decoration:line-through;color:#bbb}
+.nm{flex:1;font-size:14px;line-height:1.4;word-break:break-all;min-width:120px}
+.nm .ad{display:block;font-size:11px;color:#999;margin-top:1px}
+.nm .rm{display:block;font-size:11px;color:#ff9800;margin-top:2px;line-height:1.4}
+.nm .tg{display:inline-block;font-size:10px;background:#e8f5e9;color:#4caf50;padding:0 4px;border-radius:3px;margin-left:3px;vertical-align:middle}
+.nm .cat{display:inline-block;font-size:10px;padding:0 4px;border-radius:3px;margin-left:3px;vertical-align:middle}
+.nm .cat.food{background:#fff3e0;color:#e65100}
+.nm .cat.spot{background:#e3f2fd;color:#1565c0}
+.thumb{width:34px;height:34px;object-fit:cover;border-radius:6px;border:1px solid #eee;cursor:pointer;flex-shrink:0;margin-top:2px}
+
+/* 按钮组 */
+.btn-group{display:flex;gap:4px;align-items:center;margin-left:auto}
+.btn-group button{font-size:11px;padding:4px 8px;border-radius:5px;border:none;cursor:pointer;white-space:nowrap;-webkit-appearance:none}
+.btn-copy{background:#ff9800;color:#fff}
+.btn-del{background:none;color:#ccc;font-size:15px;padding:2px 5px}
+
+/* 备注输入 */
+.remark-input{width:100%;padding:4px 8px;font-size:12px;border:1px solid #e0e0e0;border-radius:5px;outline:0;margin-top:3px;font-family:inherit;color:#e65100;background:#fffaf0;-webkit-appearance:none}
+.remark-input::placeholder{color:#ccc;font-size:11px}
+
+/* 照片区 */
+.photobox{margin:3px 14px 6px 44px;display:flex;gap:5px;align-items:center}
+.photobox img{width:54px;height:54px;object-fit:cover;border-radius:5px;border:1px solid #eee;cursor:pointer}
+.photobox .ph{font-size:10px;color:#bbb}
+
+/* 底部 */
+.bottombar{position:fixed;bottom:0;left:0;right:0;display:flex;background:#fff;border-top:1px solid #eee;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.bottombar button{flex:1;padding:11px;font-size:13px;border:none;background:#fff;color:#555;border-right:1px solid #f5f5f5;-webkit-appearance:none}
+.bottombar button:last-child{border-right:0}
+
+/* 空状态 */
+.empty{text-align:center;padding:24px 20px;color:#bbb;font-size:13px}
+.empty .ic{font-size:28px;margin-bottom:4px}
+
+/* Toast */
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);background:rgba(0,0,0,.7);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transition:all .3s;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+/* 大图弹窗 */
+.modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:999;justify-content:center;align-items:center}
+.modal.on{display:flex}
+.modal img{max-width:92vw;max-height:82vh;border-radius:8px}
+.modal .x{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.3);color:#fff;border:none;border-radius:50%;width:32px;height:32px;font-size:15px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1 id="title">旅行心愿单</h1>
+  <div class="tabs">
+    <button class="tab on" id="tabFood" onclick="switchMode('food')">🍜 美食</button>
+    <button class="tab" id="tabSpot" onclick="switchMode('spot')">🏞️ 景点</button>
+  </div>
+  <div class="search"><input id="kw" placeholder="搜索城市/店名/景点/地址/备注" oninput="onSearch()"></div>
+</div>
+
+<div class="inputbox">
+  <div class="inputrow">
+    <input id="ic" placeholder="城市 如:成都">
+    <input id="is" placeholder="店名/景点名">
+  </div>
+  <textarea id="ia" placeholder="地址(选填)"></textarea>
+  <input id="ir" placeholder="备注(选填) 如:一定要吃辣的、带伞..." style="width:100%;padding:8px 12px;font-size:13px;border:1px solid #ddd;border-radius:8px;margin-bottom:6px;outline:0;font-family:inherit;color:#e65100">
+  <label class="btnphoto" id="bpl">+ 添加照片</label>
+  <input type="file" id="photoinput" accept="image/*">
+  <button class="btnadd" id="btnAdd" onclick="addItem()">添加到心愿单</button>
+</div>
+
+<div class="hint" id="hint">城市+店名必填 | 点名称标记已去 | 📋复制地址 | ✏️备注随时补</div>
+
+<div class="stats" id="stats"></div>
+<div class="navchips" id="navchips"></div>
+
+<!-- 待去区域 -->
+<div class="section-title todo" id="todoTitle">📌 待去 <span class="badge" id="todoBadge">0</span></div>
+<div id="listTodo"></div>
+
+<!-- 已去区域 -->
+<div class="section-title done" id="doneTitle">✅ 已去 <span class="badge" id="doneBadge">0</span></div>
+<div id="listDone"></div>
+
+<div class="bottombar">
+  <button onclick="expandAll()">展开全部</button>
+  <button onclick="collapseAll()">折叠全部</button>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal" onclick="closeModal()">
+  <button class="x" onclick="closeModal()">X</button>
+  <img id="modalimg" src="">
+</div>
+
+<script>
+// ===== 省市映射 =====
+var C2P={};
+var _c={"北京":"北京","天津":"天津","上海":"上海","重庆":"重庆",
+"成都":"四川","绵阳":"四川","乐山":"四川","眉山":"四川","广元":"四川","宜宾":"四川","南充":"四川","泸州":"四川","自贡":"四川","德阳":"四川","遂宁":"四川","内江":"四川","资阳":"四川","雅安":"四川",
+"广州":"广东","深圳":"广东","珠海":"广东","佛山":"广东","东莞":"广东","中山":"广东","惠州":"广东","汕头":"广东","湛江":"广东","江门":"广东","潮州":"广东","揭阳":"广东","茂名":"广东","肇庆":"广东","汕尾":"广东",
+"长沙":"湖南","株洲":"湖南","湘潭":"湖南","岳阳":"湖南","衡阳":"湖南","常德":"湖南","张家界":"湖南","益阳":"湖南","郴州":"湖南","永州":"湖南",
+"武汉":"湖北","宜昌":"湖北","襄阳":"湖北","黄石":"湖北","荆州":"湖北","十堰":"湖北","孝感":"湖北","黄冈":"湖北","恩施":"湖北","咸宁":"湖北",
+"杭州":"浙江","宁波":"浙江","温州":"浙江","嘉兴":"浙江","湖州":"浙江","绍兴":"浙江","金华":"浙江","衢州":"浙江","舟山":"浙江","台州":"浙江","丽水":"浙江","义乌":"浙江",
+"南京":"江苏","苏州":"江苏","无锡":"江苏","常州":"江苏","镇江":"江苏","扬州":"江苏","南通":"江苏","徐州":"江苏","盐城":"江苏","泰州":"江苏","淮安":"江苏","连云港":"江苏","宿迁":"江苏",
+"西安":"陕西","咸阳":"陕西","宝鸡":"陕西","渭南":"陕西","汉中":"陕西","延安":"陕西","安康":"陕西","商洛":"陕西","铜川":"陕西",
+"厦门":"福建","福州":"福建","泉州":"福建","漳州":"福建","莆田":"福建","宁德":"福建","龙岩":"福建","三明":"福建","南平":"福建",
+"济南":"山东","青岛":"山东","烟台":"山东","潍坊":"山东","临沂":"山东","淄博":"山东","威海":"山东","日照":"山东","德州":"山东","聊城":"山东","菏泽":"山东","泰安":"山东","济宁":"山东","东营":"山东","滨州":"山东",
+"郑州":"河南","洛阳":"河南","开封":"河南","新乡":"河南","安阳":"河南","南阳":"河南","商丘":"河南","信阳":"河南","周口":"河南","驻马店":"河南",
+"石家庄":"河北","唐山":"河北","秦皇岛":"河北","邯郸":"河北","保定":"河北","张家口":"河北","承德":"河北","沧州":"河北","廊坊":"河北","衡水":"河北",
+"合肥":"安徽","芜湖":"安徽","蚌埠":"安徽","淮南":"安徽","马鞍山":"安徽","安庆":"安徽","黄山":"安徽","滁州":"安徽","阜阳":"安徽","六安":"安徽",
+"昆明":"云南","大理":"云南","丽江":"云南","香格里拉":"云南","西双版纳":"云南","曲靖":"云南","玉溪":"云南","保山":"云南","昭通":"云南","红河":"云南",
+"贵阳":"贵州","遵义":"贵州","安顺":"贵州","毕节":"贵州","铜仁":"贵州","六盘水":"贵州","黔东南":"贵州","黔南":"贵州",
+"南宁":"广西","桂林":"广西","柳州":"广西","北海":"广西","梧州":"广西","钦州":"广西","百色":"广西","玉林":"广西","河池":"广西",
+"南昌":"江西","九江":"江西","赣州":"江西","上饶":"江西","景德镇":"江西","萍乡":"江西","新余":"江西","鹰潭":"江西","吉安":"江西","宜春":"江西",
+"沈阳":"辽宁","大连":"辽宁","鞍山":"辽宁","抚顺":"辽宁","本溪":"辽宁","丹东":"辽宁","锦州":"辽宁","营口":"辽宁","阜新":"辽宁","辽阳":"辽宁",
+"哈尔滨":"黑龙江","大庆":"黑龙江","齐齐哈尔":"黑龙江","牡丹江":"黑龙江","佳木斯":"黑龙江","绥化":"黑龙江","黑河":"黑龙江",
+"长春":"吉林","吉林市":"吉林","延吉":"吉林","四平":"吉林","通化":"吉林",
+"兰州":"甘肃","天水":"甘肃","敦煌":"甘肃","嘉峪关":"甘肃","张掖":"甘肃","武威":"甘肃","白银":"甘肃","平凉":"甘肃",
+"太原":"山西","大同":"山西","平遥":"山西","临汾":"山西","运城":"山西","长治":"山西","晋城":"山西",
+"海口":"海南","三亚":"海南","琼海":"海南","儋州":"海南","万宁":"海南",
+"呼和浩特":"内蒙古","包头":"内蒙古","鄂尔多斯":"内蒙古","赤峰":"内蒙古",
+"拉萨":"西藏","日喀则":"西藏","林芝":"西藏","阿里":"西藏",
+"乌鲁木齐":"新疆","喀什":"新疆","伊犁":"新疆","吐鲁番":"新疆","阿勒泰":"新疆",
+"西宁":"青海","格尔木":"青海","德令哈":"青海","海东":"青海",
+"银川":"宁夏","石嘴山":"宁夏","吴忠":"宁夏","固原":"宁夏",
+"香港":"香港","澳门":"澳门",
+"台北":"台湾","高雄":"台湾","台中":"台湾","台南":"台湾","花莲":"台湾"};
+for(var k in _c)C2P[k]=_c[k];
+function getProv(c){return C2P[c]||"其他";}
+
+// ===== DOM =====
+var $ic=document.getElementById("ic");
+var $is=document.getElementById("is");
+var $ia=document.getElementById("ia");
+var $ir=document.getElementById("ir");
+var $kw=document.getElementById("kw");
+var $stats=document.getElementById("stats");
+var $nav=document.getElementById("navchips");
+var $toast=document.getElementById("toast");
+var $bpl=document.getElementById("bpl");
+var $pinput=document.getElementById("photoinput");
+var $modal=document.getElementById("modal");
+var $modalimg=document.getElementById("modalimg");
+var $tabFood=document.getElementById("tabFood");
+var $tabSpot=document.getElementById("tabSpot");
+var $btnAdd=document.getElementById("btnAdd");
+var $hint=document.getElementById("hint");
+var $title=document.getElementById("title");
+var $listTodo=document.getElementById("listTodo");
+var $listDone=document.getElementById("listDone");
+var $todoBadge=document.getElementById("todoBadge");
+var $doneBadge=document.getElementById("doneBadge");
+
+// ===== 模式 =====
+var mode="food";
+var cfg={
+  food:{key:"fd_f",collKey:"fd_fc",lbl:"美食",ph:"店名/美食",btn:"添加到美食单",hi:"城市+店名必填 | 点名称标记已吃 | 📋复制地址 | ✏️备注随时补"},
+  spot:{key:"fd_s",collKey:"fd_sc",lbl:"景点",ph:"景点名",btn:"添加到景点单",hi:"城市+景点必填 | 点名称标记已去 | 📋复制地址 | ✏️备注随时补"}
+};
+
+// ===== 数据 =====
+var data=JSON.parse(localStorage.getItem(cfg[mode].key)||"[]");
+var collapsed=JSON.parse(localStorage.getItem(cfg[mode].collKey)||"[]");
+var kw="";
+var pendPhoto=null;
+
+// ===== 工具 =====
+function save(){try{localStorage.setItem(cfg[mode].key,JSON.stringify(data))}catch(e){toast("存储已满,请删一些带照片的记录")}}
+function savec(){localStorage.setItem(cfg[mode].collKey,JSON.stringify(collapsed))}
+function toast(msg){$toast.textContent=msg;$toast.classList.add("on");setTimeout(function(){$toast.classList.remove("on")},1600)}
+
+// ===== 切换模式 =====
+function switchMode(m){
+  if(m==mode)return;
+  save();savec();
+  mode=m;
+  data=JSON.parse(localStorage.getItem(cfg[mode].key)||"[]");
+  collapsed=JSON.parse(localStorage.getItem(cfg[mode].collKey)||"[]");
+  pendPhoto=null;
+  $kw.value="";kw="";
+  $ic.value="";$is.value="";$ia.value="";$ir.value="";
+  $bpl.className="btnphoto";$bpl.textContent="+ 添加照片";
+  $tabFood.className="tab"+(mode=="food"?" on":"");
+  $tabSpot.className="tab"+(mode=="spot"?" on":"");
+  $btnAdd.textContent=cfg[mode].btn;
+  $hint.textContent=cfg[mode].hi;
+  $is.placeholder=cfg[mode].ph;
+  $title.textContent=(mode=="food"?"🍜 ":"🏞️ ")+"旅行心愿单";
+  render();
+}
+
+// ===== 照片 =====
+$bpl.onclick=function(){$pinput.click()};
+$pinput.onchange=function(){
+  var f=this.files[0];if(!f)return;
+  if(f.size>6*1024*1024){toast("照片太大,选5MB以下的");this.value="";return}
+  var r=new FileReader();
+  r.onload=function(e){
+    var img=new Image();
+    img.onload=function(){
+      var c=document.createElement("canvas");var ctx=c.getContext("2d");
+      var m=800,w=img.width,h=img.height;
+      if(w>m){h=Math.round(h*(m/w));w=m}
+      if(h>m){w=Math.round(w*(m/h));h=m}
+      c.width=w;c.height=h;ctx.drawImage(img,0,0,w,h);
+      pendPhoto=c.toDataURL("image/jpeg",0.65);
+      $bpl.className="btnphoto has";$bpl.textContent="照片已选";
+      toast("照片已就绪");
+    };
+    img.src=e.target.result;
+  };
+  r.readAsDataURL(f);this.value="";
+};
+
+// ===== 复制地址(只复制地址字段) =====
+function copyAddr(addr){
+  if(!addr){toast("暂无地址可复制");return}
+  copyText(addr);
+}
+
+function copyText(text){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      toast("✅ 已复制: "+text);
+    },function(){fallbackCopy(text);});
+  }else{fallbackCopy(text);}
+}
+function fallbackCopy(text){
+  var ta=document.createElement("textarea");
+  ta.value=text;ta.style.position="fixed";ta.style.left="-9999px";
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand("copy");toast("✅ 已复制: "+text);}
+  catch(e){toast("复制失败,请手动复制");}
+  document.body.removeChild(ta);
+}
+
+// ===== 保存备注 =====
+function saveRemark(idx,val){
+  data[idx].r=val;
+  save();
+}
+
+// ===== 搜索 =====
+function onSearch(){kw=$kw.value.trim().toLowerCase();render()}
+
+// ===== 添加 =====
+function addItem(){
+  var c=$ic.value.trim(),s=$is.value.trim(),a=$ia.value.trim(),r=$ir.value.trim();
+  if(!c){toast("请填城市");$ic.focus();return}
+  if(!s){toast("请填"+(mode=="food"?"店名":"景点名"));$is.focus();return}
+  data.push({c:c,s:s,a:a||"",r:r||"",p:pendPhoto||"",d:false,t:Date.now()});
+  $ic.value="";$is.value="";$ia.value="";$ir.value="";pendPhoto=null;
+  $bpl.className="btnphoto";$bpl.textContent="+ 添加照片";
+  $kw.value="";kw="";save();render();toast("已添加: "+c+" "+s);
+}
+
+$ic.onkeydown=function(e){if(e.key=="Enter"){$is.focus();e.preventDefault()}};
+$is.onkeydown=function(e){if(e.key=="Enter"){$ia.focus();e.preventDefault()}};
+$ia.onkeydown=function(e){if(e.key=="Enter"){$ir.focus();e.preventDefault()}};
+$ir.onkeydown=function(e){if(e.key=="Enter"){addItem();e.preventDefault()}};
+
+// ===== 渲染(分待去/已去两大区) =====
+function render(){
+  var f=data.filter(function(i){
+    if(!kw)return true;
+    var r=(i.r||"").toLowerCase();
+    return i.c.toLowerCase().indexOf(kw)>-1||i.s.toLowerCase().indexOf(kw)>-1||(i.a&&i.a.toLowerCase().indexOf(kw)>-1)||r.indexOf(kw)>-1;
+  });
+
+  var todo=f.filter(function(i){return !i.d});
+  var doneItems=f.filter(function(i){return i.d});
+
+  var tot=data.length,dn=data.filter(function(i){return i.d}).length;
+  var cc=new Set(data.map(function(i){return i.c})).size;
+  var pc=new Set(data.map(function(i){return getProv(i.c)})).size;
+  var phc=data.filter(function(i){return i.p}).length;
+  var lbl=mode=="food"?"已吃":"已去";
+  $stats.innerHTML='<span><b>'+tot+'</b>总条数</span><span class="sdone"><b>'+dn+'</b>'+lbl+'</span><span><b>'+cc+'</b>城市</span><span><b>'+pc+'</b>省份</span><span><b>'+phc+'</b>照片</span>';
+
+  var todoCities=[...new Set(todo.map(function(i){return i.c}))].sort();
+  $nav.innerHTML=todoCities.map(function(c){return '<span class="chip'+(kw==c?' on':'')+'" onclick="quickKw(\''+c+'\')">'+c+'</span>'}).join("");
+
+  $todoBadge.textContent=todo.length;
+  $doneBadge.textContent=doneItems.length;
+
+  $listTodo.innerHTML="";
+  if(todo.length==0){
+    $listTodo.innerHTML='<div class="empty"><div class="ic">📭</div>'+(kw?'无匹配结果':'所有'+lbl+'都已记录!加油去吃/逛吧~')+'</div>';
+  }else{
+    $listTodo.appendChild(buildList(todo,false));
+  }
+
+  $listDone.innerHTML="";
+  if(doneItems.length==0){
+    $listDone.innerHTML='<div class="empty"><div class="ic">📭</div>还没有已去的记录,点名称标记吧~</div>';
+  }else{
+    $listDone.appendChild(buildList(doneItems,true));
+  }
+}
+
+// 构建列表DOM
+function buildList(items,isDone){
+  var pm={};
+  items.forEach(function(item){
+    var idx=-1;
+    for(var ni=0;ni<data.length;ni++){
+      if(data[ni]===item){idx=ni;break;}
+    }
+    var p=getProv(item.c);
+    if(!pm[p])pm[p]={};
+    if(!pm[p][item.c])pm[p][item.c]=[];
+    pm[p][item.c].push({i:item,idx:idx});
+  });
+
+  var container=document.createElement("div");
+  Object.keys(pm).sort().forEach(function(p){
+    var isCol=collapsed.indexOf(p)>-1;
+    var pItems=0;Object.keys(pm[p]).forEach(function(c){pItems+=pm[p][c].length});
+
+    var provDiv=document.createElement("div");provDiv.className="prov";provDiv.id="pv_"+p+(isDone?"_d":"");
+    var head=document.createElement("div");head.className="provhead";
+    head.innerHTML='<span><b>📍 '+p+'</b><span class="ct">'+pItems+'</span></span><span style="font-size:12px;color:#999">'+(isCol?'▶':'▼')+'</span>';
+    head.onclick=function(){toggleP(p)};
+    provDiv.appendChild(head);
+
+    if(!isCol){
+      Object.keys(pm[p]).sort().forEach(function(c){
+        var cb=document.createElement("div");cb.className="cityblk";
+        var ct=document.createElement("div");ct.className="cityname";
+        ct.innerHTML='<span class="d'+(isDone?' done':'')+'"></span>'+c+' <span style="font-size:10px;color:#bbb;font-weight:normal">('+pm[p][c].length+')</span>';
+        cb.appendChild(ct);
+
+        pm[p][c].forEach(function(obj){
+          var item=obj.i,idx=obj.idx;
+          var row=document.createElement("div");row.className="item"+(item.d?" done":"");
+
+          if(item.p){
+            var th=document.createElement("img");th.className="thumb";th.src=item.p;
+            th.onclick=function(e){e.stopPropagation();showModal(item.p)};
+            row.appendChild(th);
+          }
+
+          var nm=document.createElement("div");nm.className="nm";
+          var catLabel=mode=="food"?"🍜":"🏞️";
+          var doneLabel=mode=="food"?"已吃":"已去";
+          var remarkHtml=item.r?'<span class="rm">📝 '+item.r+'</span>':'';
+          nm.innerHTML=item.s+(item.d?' <span class="tg">'+doneLabel+'</span>':'')+' <span class="cat '+(mode=="food"?"food":"spot")+'">'+catLabel+'</span>'+(item.a?'<span class="ad">📍 '+item.a+'</span>':'')+remarkHtml;
+          nm.onclick=function(){data[idx].d=!data[idx].d;save();render()};
+          row.appendChild(nm);
+
+          var bg=document.createElement("div");bg.className="btn-group";
+
+          var copyBtn=document.createElement("button");copyBtn.className="btn-copy";copyBtn.textContent="📋 复制";
+          copyBtn.onclick=function(e){e.stopPropagation();copyAddr(item.a)};
+          bg.appendChild(copyBtn);
+
+          var delBtn=document.createElement("button");delBtn.className="btn-del";delBtn.textContent="🗑";
+          delBtn.onclick=function(e){e.stopPropagation();data.splice(idx,1);save();render();toast("已删除")};
+          bg.appendChild(delBtn);
+
+          row.appendChild(bg);
+          cb.appendChild(row);
+
+          // 备注输入框
+          var rk=document.createElement("div");rk.style.cssText="margin:2px 14px 6px 44px";
+          var ri=document.createElement("input");ri.className="remark-input";ri.type="text";
+          ri.placeholder=isDone?"补充备注..":"加个备注,比如口味/Tips..";
+          ri.value=item.r||"";
+          ri.onchange=function(e){e.stopPropagation();saveRemark(idx,this.value)};
+          ri.onclick=function(e){e.stopPropagation()};
+          rk.appendChild(ri);
+          cb.appendChild(rk);
+
+          if(item.p){
+            var pb=document.createElement("div");pb.className="photobox";
+            var pimg=document.createElement("img");pimg.src=item.p;
+            pimg.onclick=function(e){e.stopPropagation();showModal(item.p)};
+            pb.appendChild(pimg);
+            var ht=document.createElement("span");ht.className="ph";ht.textContent="点图看大图";
+            pb.appendChild(ht);
+            cb.appendChild(pb);
+          }
+        });
+        provDiv.appendChild(cb);
+      });
+    }
+    container.appendChild(provDiv);
+  });
+  return container;
+}
+
+function quickKw(c){$kw.value=c;kw=c.toLowerCase();render();var p=getProv(c);var el=document.getElementById("pv_"+p);if(el)el.scrollIntoView({behavior:"smooth",block:"start"})}
+
+function toggleP(p){
+  var i=collapsed.indexOf(p);
+  if(i>-1)collapsed.splice(i,1);else collapsed.push(p);
+  savec();render();
+}
+function expandAll(){collapsed=[];savec();render();toast("已展开全部")}
+function collapseAll(){collapsed=[...new Set(data.map(function(i){return getProv(i.c)}))];savec();render();toast("已折叠全部")}
+
+// ===== 照片弹窗 =====
+function showModal(src){$modalimg.src=src;$modal.classList.add("on")}
+function closeModal(){$modal.classList.remove("on");$modalimg.src=""}
+document.addEventListener("keydown",function(e){if(e.key=="Escape"){closeModal()}});
+
+// ===== Service Worker 注册(PWA离线支持) =====
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(function(){});
+}
+
+// ===== 初始化示例 =====
+var fd=JSON.parse(localStorage.getItem("fd_f")||"[]");
+var sd=JSON.parse(localStorage.getItem("fd_s")||"[]");
+if(fd.length===0&&sd.length===0){
+  fd=[
+    {c:"成都",s:"洞子口张老二凉粉",a:"文殊院大街39号",r:"甜水面必点!微辣",p:"",d:false,t:Date.now()},
+    {c:"成都",s:"严太婆锅魁",a:"奎星楼街",r:"牛肉锅魁排队人超多",p:"",d:false,t:Date.now()},
+    {c:"长沙",s:"公交新村粉店",a:"人民中路",r:"雪里蕻肉丝粉加个蛋",p:"",d:false,t:Date.now()},
+    {c:"长沙",s:"黑色经典臭豆腐",a:"五一广场",r:"外酥里嫩,配萝卜干",p:"",d:true,t:Date.now()},
+    {c:"广州",s:"陶陶居",a:"上下九步行街",r:"早茶!虾饺+红米肠",p:"",d:false,t:Date.now()},
+    {c:"西安",s:"老孙家羊肉泡馍",a:"回民街",r:"自己掰馍越小越入味",p:"",d:false,t:Date.now()},
+    {c:"重庆",s:"珮姐老火锅",a:"洪崖洞",r:"九宫格!微辣起步",p:"",d:false,t:Date.now()},
+    {c:"武汉",s:"蔡林记热干面",a:"户部巷",r:"加酸豆角绝了",p:"",d:true,t:Date.now()}
+  ];
+  sd=[
+    {c:"成都",s:"宽窄巷子",a:"青羊区同仁路",r:"晚上去更有氛围",p:"",d:false,t:Date.now()},
+    {c:"成都",s:"都江堰",a:"都江堰市",r:"建议请导游讲历史",p:"",d:false,t:Date.now()},
+    {c:"长沙",s:"岳麓山",a:"岳麓区",r:"秋天红叶超美",p:"",d:false,t:Date.now()},
+    {c:"西安",s:"兵马俑",a:"临潼区",r:"一定要请讲解员!",p:"",d:true,t:Date.now()},
+    {c:"重庆",s:"洪崖洞",a:"渝中区嘉陵江滨江路",r:"夜景绝美,适合拍照",p:"",d:false,t:Date.now()},
+    {c:"桂林",s:"漓江",a:"漓江风景区",r:"坐竹筏比游船舒服",p:"",d:false,t:Date.now()},
+    {c:"杭州",s:"西湖",a:"西湖区",r:"断桥残雪冬天去!",p:"",d:false,t:Date.now()},
+    {c:"北京",s:"故宫",a:"东城区景山前街4号",r:"提前网上预约!",p:"",d:true,t:Date.now()}
+  ];
+  localStorage.setItem("fd_f",JSON.stringify(fd));
+  localStorage.setItem("fd_s",JSON.stringify(sd));
+}
+
+render();
+</script>
+</body>
+</html>
