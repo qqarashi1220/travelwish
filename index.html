@@ -70,6 +70,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .item.done .nm{text-decoration:line-through;color:#bbb}
 .nm{flex:1;font-size:14px;line-height:1.4;word-break:break-all;min-width:120px}
 .nm .ad{display:block;font-size:11px;color:#999;margin-top:1px}
+.nm .ad.editable{cursor:pointer;color:#1976d2}
+.nm .ad.editable:hover{text-decoration:underline}
 .nm .rm{display:block;font-size:11px;color:#ff9800;margin-top:2px;line-height:1.4}
 .nm .tg{display:inline-block;font-size:10px;background:#e8f5e9;color:#4caf50;padding:0 4px;border-radius:3px;margin-left:3px;vertical-align:middle}
 .nm .cat{display:inline-block;font-size:10px;padding:0 4px;border-radius:3px;margin-left:3px;vertical-align:middle}
@@ -81,11 +83,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .btn-group{display:flex;gap:4px;align-items:center;margin-left:auto}
 .btn-group button{font-size:11px;padding:4px 8px;border-radius:5px;border:none;cursor:pointer;white-space:nowrap;-webkit-appearance:none}
 .btn-copy{background:#ff9800;color:#fff}
+.btn-edit{background:#1976d2;color:#fff}
 .btn-del{background:none;color:#ccc;font-size:15px;padding:2px 5px}
 
 /* 备注输入 */
 .remark-input{width:100%;padding:4px 8px;font-size:12px;border:1px solid #e0e0e0;border-radius:5px;outline:0;margin-top:3px;font-family:inherit;color:#e65100;background:#fffaf0;-webkit-appearance:none}
 .remark-input::placeholder{color:#ccc;font-size:11px}
+
+/* 地址编辑输入 */
+.addr-edit{width:100%;padding:3px 6px;font-size:11px;border:1px solid #1976d2;border-radius:4px;outline:0;margin-top:2px;font-family:inherit;color:#1976d2;background:#e3f2fd;-webkit-appearance:none}
 
 /* 照片区 */
 .photobox{margin:3px 14px 6px 44px;display:flex;gap:5px;align-items:center}
@@ -128,14 +134,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
     <input id="ic" placeholder="城市 如:成都">
     <input id="is" placeholder="店名/景点名">
   </div>
-  <textarea id="ia" placeholder="地址(选填)"></textarea>
+  <textarea id="ia" placeholder="地址(选填,可后续补录)"></textarea>
   <input id="ir" placeholder="备注(选填) 如:一定要吃辣的、带伞..." style="width:100%;padding:8px 12px;font-size:13px;border:1px solid #ddd;border-radius:8px;margin-bottom:6px;outline:0;font-family:inherit;color:#e65100">
   <label class="btnphoto" id="bpl">+ 添加照片</label>
   <input type="file" id="photoinput" accept="image/*">
   <button class="btnadd" id="btnAdd" onclick="addItem()">添加到心愿单</button>
 </div>
 
-<div class="hint" id="hint">城市+店名必填 | 点名称标记已去 | 📋复制地址 | ✏️备注随时补</div>
+<div class="hint" id="hint">城市+店名必填 | 地址可后续补录 | 点名称标记已去 | 📋复制地址</div>
 
 <div class="stats" id="stats"></div>
 <div class="navchips" id="navchips"></div>
@@ -221,8 +227,8 @@ var $doneBadge=document.getElementById("doneBadge");
 // ===== 模式 =====
 var mode="food";
 var cfg={
-  food:{key:"fd_f",collKey:"fd_fc",lbl:"美食",ph:"店名/美食",btn:"添加到美食单",hi:"城市+店名必填 | 点名称标记已吃 | 📋复制地址 | ✏️备注随时补"},
-  spot:{key:"fd_s",collKey:"fd_sc",lbl:"景点",ph:"景点名",btn:"添加到景点单",hi:"城市+景点必填 | 点名称标记已去 | 📋复制地址 | ✏️备注随时补"}
+  food:{key:"fd_f",collKey:"fd_fc",lbl:"美食",ph:"店名/美食",btn:"添加到美食单",hi:"城市+店名必填 | 地址可后续补录 | 点名称标记已吃 | 📋复制地址"},
+  spot:{key:"fd_s",collKey:"fd_sc",lbl:"景点",ph:"景点名",btn:"添加到景点单",hi:"城市+景点必填 | 地址可后续补录 | 点名称标记已去 | 📋复制地址"}
 };
 
 // ===== 数据（已清空，打开后自己记录）=====
@@ -307,6 +313,25 @@ function saveRemark(idx,val){
   save();
 }
 
+// ===== 补录/编辑地址（核心新功能）=====
+function editAddress(idx,oldVal){
+  var newVal=prompt("编辑地址:",oldVal||"");
+  if(newVal!==null){
+    data[idx].a=newVal.trim();
+    save();
+    toast(data[idx].a?"✅ 地址已更新":"✅ 地址已清除");
+    render();
+  }
+}
+
+// 通过事件委托处理地址编辑点击
+function onAddrClick(e,idx){
+  e.stopPropagation();
+  var item=data[idx];
+  var oldVal=item?item.a:"";
+  editAddress(idx,oldVal);
+}
+
 // ===== 搜索 =====
 function onSearch(){kw=$kw.value.trim().toLowerCase();render()}
 
@@ -331,7 +356,8 @@ function render(){
   var f=data.filter(function(i){
     if(!kw)return true;
     var r=(i.r||"").toLowerCase();
-    return i.c.toLowerCase().indexOf(kw)>-1||i.s.toLowerCase().indexOf(kw)>-1||(i.a&&i.a.toLowerCase().indexOf(kw)>-1)||r.indexOf(kw)>-1;
+    var a=(i.a||"").toLowerCase();
+    return i.c.toLowerCase().indexOf(kw)>-1||i.s.toLowerCase().indexOf(kw)>-1||a.indexOf(kw)>-1||r.indexOf(kw)>-1;
   });
 
   var todo=f.filter(function(i){return !i.d});
@@ -345,7 +371,8 @@ function render(){
   var lbl=mode=="food"?"已吃":"已去";
   $stats.innerHTML='<span><b>'+tot+'</b>总条数</span><span class="sdone"><b>'+dn+'</b>'+lbl+'</span><span><b>'+cc+'</b>城市</span><span><b>'+pc+'</b>省份</span><span><b>'+phc+'</b>照片</span>';
 
-  var todoCities=[...new Set(todo.map(function(i){return i.c}))].sort();
+  var todoCities=[].concat(Array.from(new Set(todo.map(function(i){return i.c}))));
+  todoCities.sort();
   $nav.innerHTML=todoCities.map(function(c){return '<span class="chip'+(kw==c?' on':'')+'" onclick="quickKw(\''+c+'\')">'+c+'</span>'}).join("");
 
   $todoBadge.textContent=todo.length;
@@ -412,7 +439,21 @@ function buildList(items,isDone){
           var catLabel=mode=="food"?"🍜":"🏞️";
           var doneLabel=mode=="food"?"已吃":"已去";
           var remarkHtml=item.r?'<span class="rm">📝 '+item.r+'</span>':'';
-          nm.innerHTML=item.s+(item.d?' <span class="tg">'+doneLabel+'</span>':'')+' <span class="cat '+(mode=="food"?"food":"spot")+'">'+catLabel+'</span>'+(item.a?'<span class="ad">📍 '+item.a+'</span>':'')+remarkHtml;
+          // 地址显示：有地址则显示并支持点击编辑，无地址显示蓝色"点击补录地址"
+          var addrSpan=document.createElement("span");
+          if(item.a){
+            addrSpan.className="ad editable";
+            addrSpan.title="点击编辑地址";
+            addrSpan.innerHTML="📍 "+item.a+" ✏️";
+          }else{
+            addrSpan.className="ad editable";
+            addrSpan.style.cssText="color:#1976d2;font-style:italic";
+            addrSpan.textContent="+ 点击补录地址";
+          }
+          addrSpan.onclick=function(e){onAddrClick(e,idx)};
+          nm.innerHTML=item.s+(item.d?' <span class="tg">'+doneLabel+'</span>':'')+' <span class="cat '+(mode=="food"?"food":"spot")+'">'+catLabel+'</span>'+remarkHtml;
+          // 地址span已创建，插入到正确位置（在备注之前）
+          nm.appendChild(addrSpan);
           nm.onclick=function(){data[idx].d=!data[idx].d;save();render()};
           row.appendChild(nm);
 
@@ -421,6 +462,10 @@ function buildList(items,isDone){
           var copyBtn=document.createElement("button");copyBtn.className="btn-copy";copyBtn.textContent="📋 复制";
           copyBtn.onclick=function(e){e.stopPropagation();copyAddr(item.a)};
           bg.appendChild(copyBtn);
+
+          var editBtn=document.createElement("button");editBtn.className="btn-edit";editBtn.textContent="✏️ 地址";
+          editBtn.onclick=function(e){e.stopPropagation();onAddrClick(e,idx)};
+          bg.appendChild(editBtn);
 
           var delBtn=document.createElement("button");delBtn.className="btn-del";delBtn.textContent="🗑";
           delBtn.onclick=function(e){e.stopPropagation();data.splice(idx,1);save();render();toast("已删除")};
@@ -465,7 +510,7 @@ function toggleP(p){
   savec();render();
 }
 function expandAll(){collapsed=[];savec();render();toast("已展开全部")}
-function collapseAll(){collapsed=[...new Set(data.map(function(i){return getProv(i.c)}))];savec();render();toast("已折叠全部")}
+function collapseAll(){collapsed=[].concat(Array.from(new Set(data.map(function(i){return getProv(i.c)}))));savec();render();toast("已折叠全部")}
 
 // ===== 照片弹窗 =====
 function showModal(src){$modalimg.src=src;$modal.classList.add("on")}
@@ -477,7 +522,7 @@ if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js').catch(function(){});
 }
 
-// ===== 初始化（无示例数据，打开就是空白，等你记录）=====
+// ===== 初始化 =====
 render();
 </script>
 </body>
